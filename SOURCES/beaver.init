@@ -1,0 +1,83 @@
+#!/bin/bash
+# chkconfig: - 80 15
+### BEGIN INIT INFO
+# Provides:          beaver 
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:
+# Default-Stop:      0 1 6
+# Short-Description: Starts beaver
+# Description: Logstash agent
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+NAME=@@@NAME@@@
+
+[ -f /etc/sysconfig/$NAME ] && . /etc/sysconfig/$NAME
+
+BEAVER_USER=${NAME}
+DAEMON="@@@DAEMON@@@/${NAME}"
+
+PID_FILE=${PIDFILE:-@@@PIDDIR@@@/${NAME}.pid}
+LOCK_FILE=${LOCKFILE:-@@@LOCKFILE@@@}
+LOG_FILE=${LOGFILE:-@@@LOGDIR@@@/${NAME}.log}
+OUT_FILE=${LOGFILE:-@@@LOGDIR@@@/${NAME}.out}
+
+BEAVER_PATH_CONF=${BEAVER_PATH_CONF:-@@@CONFDIR@@@}
+BEAVER_PATH_CONFD=${BEAVER_PATH_CONFD:-@@@CONFDDIR@@@}
+#Change loglevel to -v turn on debuging
+BEAVER_LOGLEVEL=${BEAVER_LOGLEVEL:-""}
+BEAVER_DATA_DIR=${BEAVER_DATA_DIR:-@@@DATADIR@@@}
+
+
+DAEMON_OPTS="\
+  -P ${PID_FILE} \
+  -l ${LOG_FILE} \
+  -c ${BEAVER_PATH_CONF}
+  -C ${BEAVER_PATH_CONFD}
+  $BEAVER_LOGLEVEL \
+"
+
+start() {
+    echo -n $"Starting ${NAME}: "
+    daemon --pidfile=${PID_FILE} --user $BEAVER_USER $DAEMON $DAEMON_OPTS >> $OUT_FILE 2>&1
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch $LOCK_FILE
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping ${NAME}: "
+    killproc -p ${PID_FILE} -d 10 $DAEMON
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && rm -f ${LOCK_FILE} ${PID_FILE}
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status -p ${PID_FILE} $DAEMON
+        RETVAL=$?
+        ;;
+    restart|force-reload)
+        stop
+        start
+        ;;
+    *)
+        N=/etc/init.d/${NAME}
+        echo "Usage: $N {start|stop|restart|force-reload}" >&2
+        RETVAL=2
+        ;;
+esac
+
+exit $RETVAL
