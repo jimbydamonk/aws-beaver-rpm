@@ -23,26 +23,18 @@ DAEMON="@@@DAEMON@@@/${NAME}"
 PID_FILE=${PIDFILE:-@@@PIDDIR@@@/${NAME}.pid}
 LOCK_FILE=${LOCKFILE:-@@@LOCKFILE@@@}
 LOG_FILE=${LOGFILE:-@@@LOGDIR@@@/${NAME}.log}
-OUT_FILE=${LOGFILE:-@@@LOGDIR@@@/${NAME}.out}
 
 BEAVER_PATH_CONF=${BEAVER_PATH_CONF:-@@@CONFDIR@@@}
 BEAVER_PATH_CONFD=${BEAVER_PATH_CONFD:-@@@CONFDDIR@@@}
 #Change loglevel to -v turn on debuging
 BEAVER_LOGLEVEL=${BEAVER_LOGLEVEL:-""}
-BEAVER_DATA_DIR=${BEAVER_DATA_DIR:-@@@DATADIR@@@}
 
 
-DAEMON_OPTS="\
-  -P ${PID_FILE} \
-  -l ${LOG_FILE} \
-  -c ${BEAVER_PATH_CONF}
-  -C ${BEAVER_PATH_CONFD}
-  $BEAVER_LOGLEVEL \
-"
+DAEMON_OPTS="-D -P ${PID_FILE} -l ${LOG_FILE} -c ${BEAVER_PATH_CONF} -C ${BEAVER_PATH_CONFD} $BEAVER_LOGLEVEL"
 
 start() {
     echo -n $"Starting ${NAME}: "
-    daemon --pidfile=${PID_FILE} --user $BEAVER_USER $DAEMON $DAEMON_OPTS >> $OUT_FILE 2>&1
+    daemon --pidfile=${PID_FILE} --user $BEAVER_USER $DAEMON $DAEMON_OPTS 
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && touch $LOCK_FILE
